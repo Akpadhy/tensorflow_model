@@ -36,11 +36,11 @@ class CombinedEstimator(tf.estimator.Estimator):
                         predictions_dict = {**predictions_dict, **spec.predictions}
 
                 # Mode='train', combine train_op - actual purpose
-                if tf.is_tensor(spec.train_op):
-                    if not tf.is_tensor(train_op_list):
+                if spec.train_op:
+                    if not train_op_list:
                         train_op_list = [spec.train_op]
                     else:
-                        train_op_list += spec.train_op
+                        train_op_list.append(spec.train_op)
 
                 # mode='train', combine loss - checkpointing purpose
                 if tf.is_tensor(spec.loss):
