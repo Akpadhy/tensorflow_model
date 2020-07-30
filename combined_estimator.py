@@ -1,6 +1,5 @@
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
-tf.compat.v1.disable_eager_execution()
 
 
 class CombinedEstimator(tf.estimator.Estimator):
