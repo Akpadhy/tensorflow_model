@@ -19,7 +19,7 @@ def cost_promise(y_true, y_pred, alpha1, alpha2, beta1, beta2):
     
     loss = tf.math.truediv(intermediate_loss,
                           tf.constant(2.0, tf.float64))
-    return tf.math.reduce_mean(loss)#, axis=-1)
+    return tf.math.reduce_mean(loss)
 
 def promise_loss(alpha1, alpha2, beta1, beta2):
     def cost(y_true, y_pred):

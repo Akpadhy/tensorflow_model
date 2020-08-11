@@ -1,6 +1,6 @@
 import tensorflow as tf
 tf.get_logger().setLevel('ERROR')
-
+tf.compat.v1.disable_eager_execution()
 
 def cost_promise(y_true, y_pred, alpha1, alpha2, beta1, beta2):
     
@@ -13,13 +13,13 @@ def cost_promise(y_true, y_pred, alpha1, alpha2, beta1, beta2):
                         tf.constant(2.0, tf.float64))
     
     intermediate_loss = tf.math.add(tf.math.multiply(tf.math.multiply(tf.math.add(tf.constant(1.0, tf.float64), s), alpha1), 
-                                                     tf.math.multiply(e1, tf.math.exp(tf.math.truediv(y_true, tf.constant(60, tf.float64))))),
+                                    tf.math.multiply(e1, tf.math.exp(tf.math.truediv(y_true, tf.constant(60.0, tf.float64))))),
                                     tf.math.multiply(tf.math.multiply(tf.math.subtract(tf.constant(1.0, tf.float64), s), alpha2),
-                                                     tf.math.multiply(e2, tf.math.exp(tf.math.subtract(tf.constant(1.0, tf.float64), tf.math.truediv(y_true, tf.constant(60, tf.float64)))))))
+                                    tf.math.multiply(e2, tf.math.exp(tf.math.subtract(tf.constant(1.0, tf.float64), tf.math.truediv(y_true,
+                                                                                                                                    tf.constant(60.0,tf.float64)))))))
     
-    loss = tf.math.truediv(intermediate_loss,
-                          tf.constant(2.0, tf.float64))
-    return tf.math.reduce_mean(loss)
+    loss = tf.math.truediv(intermediate_loss,tf.constant(2.0, tf.float64))
+    return tf.math.reduce_mean(loss, axis=-1)
 
 def promise_loss(alpha1, alpha2, beta1, beta2):
     def cost(y_true, y_pred):
@@ -36,9 +36,9 @@ def o2a_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae'
         # feed forward neural network
         l1 = tf.compat.v1.layers.dense(input_layer, units = 32)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 32)
+        l2 = tf.compat.v1.layers.dense(r1, units = 16)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 32)
+        l3 = tf.compat.v1.layers.dense(r2, units = 8)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
@@ -81,9 +81,9 @@ def fm_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae',
         # feed forward neural network
         l1 = tf.compat.v1.layers.dense(input_layer, units = 32)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 32)
+        l2 = tf.compat.v1.layers.dense(r1, units = 16)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 32)
+        l3 = tf.compat.v1.layers.dense(r2, units = 8)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
@@ -125,11 +125,11 @@ def wt_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae',
         input_layer = tf.concat([features[feat_name] for feat_name in features], axis=-1)
 
         # feed forward neural network
-        l1 = tf.compat.v1.layers.dense(input_layer, units = 16)
+        l1 = tf.compat.v1.layers.dense(input_layer, units = 32)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
         l2 = tf.compat.v1.layers.dense(r1, units = 16)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 16)
+        l3 = tf.compat.v1.layers.dense(r2, units = 8)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
@@ -164,18 +164,18 @@ def wt_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae',
     return model_fn
 
 def o2p_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae', 
-                 ALPHA_1 = 1.0, ALPHA_2 = 1.0, BETA_1 = 2.0, BETA_2 = 2.0):
+                 ALPHA_1 = 2.0, ALPHA_2 = 1.0, BETA_1 = 2.0, BETA_2 = 2.0):
     def model_fn(features, labels, mode):
 
         features = {feat_name: tf.expand_dims(features[feat_name], -1) for feat_name in features_regressor}
         input_layer = tf.concat([features[feat_name] for feat_name in features], axis=-1)
 
         # feed forward neural network
-        l1 = tf.compat.v1.layers.dense(input_layer, units = 128)
+        l1 = tf.compat.v1.layers.dense(input_layer, units = 64)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 128)
+        l2 = tf.compat.v1.layers.dense(r1, units = 32)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 128)
+        l3 = tf.compat.v1.layers.dense(r2, units = 16)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
@@ -216,12 +216,11 @@ def lm_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae',
         features = {feat_name: tf.expand_dims(features[feat_name], -1) for feat_name in features_regressor}
         input_layer = tf.concat([features[feat_name] for feat_name in features], axis=-1)
 
-        # feed forward neural network
-        l1 = tf.compat.v1.layers.dense(input_layer, units = 128)
+        l1 = tf.compat.v1.layers.dense(input_layer, units = 64)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 128)
+        l2 = tf.compat.v1.layers.dense(r1, units = 32)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 128)
+        l3 = tf.compat.v1.layers.dense(r2, units = 16)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
@@ -257,7 +256,7 @@ def lm_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae',
 
 
 def o2d_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae', 
-                 ALPHA_1 = 1.0, ALPHA_2 = 1.0, BETA_1 = 2.0, BETA_2 = 2.0):
+                 ALPHA_1 = 1.0, ALPHA_2 = 1.0, BETA_1 = 0.0, BETA_2 = 0.0):
     def model_fn(features, labels, mode):
         features = {feat_name: tf.expand_dims(features[feat_name], -1) for feat_name in features_regressor}
         input_layer = tf.concat([features[feat_name] for feat_name in features], axis=-1)
@@ -265,10 +264,12 @@ def o2d_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS='mae'
         # feed forward neural network
         l1 = tf.compat.v1.layers.dense(input_layer, units = 256)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 256)
+        l2 = tf.compat.v1.layers.dense(r1, units = 128)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 256)
+        l3 = tf.compat.v1.layers.dense(r2, units = 64)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
+        #l4 = tf.compat.v1.layers.dense(r3, units = 32)
+        #r4 = tf.nn.leaky_relu(l4, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
         predictions = {'predicted_O2D_accurate':logits}
@@ -313,9 +314,9 @@ def o2d_beef_model_fn(features_regressor, LEAKY_RELU_ALPHA, LEARNING_RATE, LOSS=
         # feed forward neural network
         l1 = tf.compat.v1.layers.dense(input_layer, units = 256)
         r1 = tf.nn.leaky_relu(l1, alpha=LEAKY_RELU_ALPHA)
-        l2 = tf.compat.v1.layers.dense(r1, units = 256)
+        l2 = tf.compat.v1.layers.dense(r1, units = 128)
         r2 = tf.nn.leaky_relu(l2, alpha=LEAKY_RELU_ALPHA)
-        l3 = tf.compat.v1.layers.dense(r2, units = 256)
+        l3 = tf.compat.v1.layers.dense(r2, units = 128)
         r3 = tf.nn.leaky_relu(l3, alpha=LEAKY_RELU_ALPHA)
         logits = tf.compat.v1.layers.dense(r3, units=1)
 
